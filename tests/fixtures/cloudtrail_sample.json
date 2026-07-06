@@ -1,0 +1,36 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2024-01-15T10:30:00Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.42",
+      "userAgent": "Mozilla/5.0",
+      "recipientAccountId": "123456789012",
+      "eventID": "abc-123",
+      "readOnly": false,
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "admin",
+        "principalId": "AIDACKCEVSQ6C2EXAMPLE",
+        "accountId": "123456789012"
+      },
+      "responseElements": { "ConsoleLogin": "Success" }
+    },
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2024-01-15T10:31:00Z",
+      "eventSource": "iam.amazonaws.com",
+      "eventName": "PutUserPolicy",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.42",
+      "recipientAccountId": "123456789012",
+      "eventID": "abc-124",
+      "readOnly": false,
+      "errorCode": "AccessDenied",
+      "userIdentity": { "userName": "attacker", "principalId": "AIDAEXAMPLE2" }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+title: Same Identity Active Across Multiple Cloud Providers
+id: 8f1e0a2c-1b3d-4e5f-9a7b-cumulus000003
+status: experimental
+description: >
+  A single principal (or source IP) authenticated across AWS, Azure, and/or GCP
+  in a short window. Surfaced by `cumulonimbus analyze --report correlate`.
+logsource:
+  category: cloud
+detection:
+  selection:
+    event.category: authentication
+  condition: selection
+  # Correlation is applied by cumulonimbus.core.analysis.correlate_identities;
+  # this rule documents the intent for downstream SIEMs.
+level: medium
+tags:
+  - attack.persistence
+  - attack.t1078

@@ -1,0 +1,23 @@
+image:
+  repository: sltcnb/cumulonimbus
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# One of: aws | azure | gcp | k8s
+provider: aws
+service: all
+schedule: "0 */6 * * *"   # every 6h; set "" for a one-shot Job
+
+output:
+  pvc: cumulonimbus-output
+  mountPath: /data
+
+# Provider-specific args appended to `cumulonimbus <provider> collect`.
+extraArgs: []
+
+# Env from a Secret (cloud credentials).
+credentialsSecret: cloud-creds
+
+resources:
+  requests: { cpu: 100m, memory: 256Mi }
+  limits: { cpu: "1", memory: 1Gi }

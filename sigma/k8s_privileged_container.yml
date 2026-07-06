@@ -1,0 +1,20 @@
+title: Privileged Kubernetes Container with Host Path Mount
+id: 8f1e0a2c-1b3d-4e5f-9a7b-cumulus000004
+status: experimental
+description: >
+  A container running privileged and mounting a host path — a classic
+  container-escape / node-compromise primitive. Surfaced by the
+  k8s.container collector.
+logsource:
+  product: kubernetes
+detection:
+  selection:
+    event.dataset: k8s.container
+    k8s.privileged: true
+  filter:
+    k8s.host_path_mounts: null
+  condition: selection and not filter
+level: high
+tags:
+  - attack.privilege_escalation
+  - attack.t1611

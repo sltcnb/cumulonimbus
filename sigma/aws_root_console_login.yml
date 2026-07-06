@@ -1,0 +1,17 @@
+title: AWS Root Account Console Login
+id: 8f1e0a2c-1b3d-4e5f-9a7b-cumulus000001
+status: experimental
+description: Root account authenticated to the AWS console — should be rare and alerted.
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    event.dataset: aws.cloudtrail
+    aws.cloudtrail.event_name: ConsoleLogin
+    aws.cloudtrail.user_identity.type: Root
+  condition: selection
+level: high
+tags:
+  - attack.initial_access
+  - attack.t1078.004

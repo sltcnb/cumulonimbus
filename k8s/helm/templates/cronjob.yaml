@@ -1,0 +1,44 @@
+{{- $isCron := ne (default "" .Values.schedule) "" -}}
+apiVersion: {{ if $isCron }}batch/v1{{ else }}batch/v1{{ end }}
+kind: {{ if $isCron }}CronJob{{ else }}Job{{ end }}
+metadata:
+  name: {{ .Release.Name }}-collection
+spec:
+{{- if $isCron }}
+  schedule: {{ .Values.schedule | quote }}
+  jobTemplate:
+    spec:
+{{- end }}
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: cumulonimbus
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              args:
+                - {{ .Values.provider | quote }}
+                - collect
+                - --service
+                - {{ .Values.service | quote }}
+                - --output
+                - {{ .Values.output.mountPath | quote }}
+{{- range .Values.extraArgs }}
+                - {{ . | quote }}
+{{- end }}
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.credentialsSecret }}
+              volumeMounts:
+                - name: output
+                  mountPath: {{ .Values.output.mountPath }}
+              resources:
+{{ toYaml .Values.resources | indent 16 }}
+              securityContext:
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+          volumes:
+            - name: output
+              persistentVolumeClaim:
+                claimName: {{ .Values.output.pvc }}
