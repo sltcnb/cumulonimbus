@@ -63,9 +63,12 @@ class S3AccessParser(Parser):
             outcome = None
 
         op = fields.get("operation")
+        # Normalize the S3/Apache-style timestamp to ISO-8601 on both input
+        # paths so timelines sort correctly against other datasets.
+        raw_time = fields.get("time", "")
+        ts = _parse_time(raw_time) or (raw_time or None)
         return ForensicEvent(
-            **{"@timestamp": _parse_time(fields.get("time", "")) if not isinstance(record, dict)
-               else fields.get("time")},
+            **{"@timestamp": ts},
             event=Event(action=op, category=["file"],
                         type=["access"], outcome=outcome,
                         provider="aws", dataset="aws.s3access"),

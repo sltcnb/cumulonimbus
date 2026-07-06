@@ -43,7 +43,7 @@ def encode_stix(events: Iterable[Event]) -> str:
             seen_ids.add(obj["id"])
         return obj["id"]
 
-    for ev in events:
+    for i, ev in enumerate(events):
         ts = ev.get("@timestamp")
         refs = []
         for role in ("source", "destination"):
@@ -53,8 +53,10 @@ def encode_stix(events: Iterable[Event]) -> str:
                                   "value": ip}))
         _add({
             "type": "observed-data", "spec_version": "2.1",
-            "id": _det_id("observed-data", ts, _get(ev, "event.action"),
-                          _get(ev, "source.ip")),
+            # include a positional index so distinct events in the same second
+            # with identical action/ip do not collapse to one object.
+            "id": _det_id("observed-data", i, ts, _get(ev, "event.action"),
+                          _get(ev, "source.ip"), _get(ev, "destination.ip")),
             "created": ts, "modified": ts, "first_observed": ts,
             "last_observed": ts, "number_observed": 1,
             "object_refs": refs,
@@ -72,9 +74,10 @@ def encode_stix(events: Iterable[Event]) -> str:
 def encode_es_bulk(events: Iterable[Event], index: str = "cumulonimbus") -> str:
     """Elasticsearch _bulk newline-delimited action/doc pairs."""
     lines = []
-    for ev in events:
-        _id = _det_id("doc", ev.get("@timestamp"), _get(ev, "event.action"),
-                      _get(ev, "source.ip"))
+    for i, ev in enumerate(events):
+        # positional index keeps distinct same-second events from overwriting
+        _id = _det_id("doc", i, ev.get("@timestamp"), _get(ev, "event.action"),
+                      _get(ev, "source.ip"), _get(ev, "destination.ip"))
         lines.append(json.dumps({"index": {"_index": index, "_id": _id.split("--")[1]}}))
         lines.append(json.dumps(ev, default=str))
     return "\n".join(lines) + "\n"

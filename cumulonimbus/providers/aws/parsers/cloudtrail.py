@@ -29,7 +29,7 @@ def _outcome(rec: dict[str, Any]) -> str:
 def _user(rec: dict[str, Any]) -> Optional[User]:
     ident = rec.get("userIdentity") or {}
     name = (ident.get("userName") or ident.get("arn")
-            or (ident.get("sessionContext", {}).get("sessionIssuer", {}) or {}).get("userName"))
+            or ((ident.get("sessionContext") or {}).get("sessionIssuer") or {}).get("userName"))
     uid = ident.get("principalId") or ident.get("accountId")
     if not (name or uid):
         return None

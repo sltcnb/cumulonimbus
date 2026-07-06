@@ -28,10 +28,10 @@ class GuardDutyParser(Parser):
         service = record.get("Service") or {}
         action = service.get("Action") or {}
         remote_ip = (
-            (action.get("NetworkConnectionAction", {})
-                   .get("RemoteIpDetails", {}) or {}).get("IpAddressV4")
-            or (action.get("AwsApiCallAction", {})
-                      .get("RemoteIpDetails", {}) or {}).get("IpAddressV4"))
+            ((action.get("NetworkConnectionAction") or {})
+                   .get("RemoteIpDetails") or {}).get("IpAddressV4")
+            or ((action.get("AwsApiCallAction") or {})
+                      .get("RemoteIpDetails") or {}).get("IpAddressV4"))
 
         return ForensicEvent(
             **{"@timestamp": record.get("UpdatedAt") or record.get("CreatedAt")},

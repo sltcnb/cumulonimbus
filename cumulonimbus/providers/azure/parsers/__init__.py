@@ -137,7 +137,7 @@ class NSGFlowParser(Parser):
             source=Host(ip=s_ip or None, port=_int(s_p)),
             destination=Host(ip=d_ip or None, port=_int(d_p)),
             network=Network(transport=_PROTO.get(proto, proto),
-                            direction="inbound" if direction == "I" else "outbound"),
+                            direction={"I": "inbound", "O": "outbound"}.get(direction)),
             cloud=Cloud(provider="azure"),
         )
 
