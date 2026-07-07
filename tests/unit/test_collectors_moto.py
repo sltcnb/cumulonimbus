@@ -15,7 +15,12 @@ mock_aws = moto.mock_aws
 import cumulonimbus.providers.aws.parsers  # noqa: F401,E402  (registers parsers)
 from cumulonimbus.core.parser import get_parser  # noqa: E402
 from cumulonimbus.providers.aws.collectors import (  # noqa: E402
-    EC2Collector, IAMCollector, LambdaCollector, RDSCollector, S3LogCollector)
+    EC2Collector,
+    IAMCollector,
+    LambdaCollector,
+    RDSCollector,
+    S3LogCollector,
+)
 
 REGION = "us-east-1"
 

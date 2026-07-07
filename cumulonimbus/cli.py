@@ -11,15 +11,16 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from cumulonimbus.core.exporter import FORMATS, export as export_events
-from cumulonimbus.core.normalizer import Normalizer
-from cumulonimbus.core.parser import get_parser, list_parsers
-from cumulonimbus.ecs.schema import ForensicEvent
 # Import provider parser packages so their @register decorators run.
 import cumulonimbus.providers.aws.parsers  # noqa: F401
 import cumulonimbus.providers.azure.parsers  # noqa: F401
 import cumulonimbus.providers.gcp.parsers  # noqa: F401
 import cumulonimbus.providers.k8s.parsers  # noqa: F401
+from cumulonimbus.core.exporter import FORMATS
+from cumulonimbus.core.exporter import export as export_events
+from cumulonimbus.core.normalizer import Normalizer
+from cumulonimbus.core.parser import get_parser, list_parsers
+from cumulonimbus.ecs.schema import ForensicEvent
 
 console = Console()
 
@@ -212,12 +213,35 @@ def k8s_collect(service, kubeconfig, in_cluster, audit_log, etcd_export, output)
               help="Output dir for normalized ECS jsonl.")
 @click.option("--dataset", default=None,
               help="Force a parser (default: infer from filename stem).")
-def parse(raw_dir, output, dataset):
+@click.option("--geoip-city", default=None, help="MaxMind City .mmdb for GeoIP enrichment.")
+@click.option("--geoip-asn", default=None, help="MaxMind ASN .mmdb for ASN enrichment.")
+@click.option("--rdns", is_flag=True, help="Reverse-DNS public IPs (network lookups).")
+@click.option("--ioc", "ioc_file", default=None,
+              help="IOC file (IP-per-line or STIX bundle) to flag matches.")
+def parse(raw_dir, output, dataset, geoip_city, geoip_asn, rdns, ioc_file):
     """Parse + normalize raw JSONL files into ECS events."""
+    from cumulonimbus.core.normalizer import DEFAULT_ENRICHERS
+
     raw_dir = Path(raw_dir)
     out_dir = Path(output) / "ecs"
     out_dir.mkdir(parents=True, exist_ok=True)
-    normalizer = Normalizer()
+
+    enrichers = list(DEFAULT_ENRICHERS)
+    if geoip_city or geoip_asn:
+        try:
+            from cumulonimbus.core.enrichment import GeoIPEnricher
+            enrichers.append(GeoIPEnricher(city_db=geoip_city, asn_db=geoip_asn))
+        except ImportError:
+            raise click.ClickException("geoip2 not installed — `pip install cumulonimbus-dfir[geoip]`")
+    if rdns:
+        from cumulonimbus.core.enrichment import ReverseDNSEnricher
+        enrichers.append(ReverseDNSEnricher())
+    if ioc_file:
+        from cumulonimbus.core.enrichment import IOCEnricher
+        enrichers.append(IOCEnricher.from_file(ioc_file))
+        console.print(f"[dim]loaded {len(enrichers[-1].iocs)} IOCs[/]")
+
+    normalizer = Normalizer(enrichers=enrichers)
     total = 0
     for f in sorted(raw_dir.glob("*.jsonl")):
         ds = dataset or f.stem

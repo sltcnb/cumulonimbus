@@ -1,5 +1,7 @@
 # Cumulonimbus
 
+[![CI](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml/badge.svg)](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml)
+
 **Cloud forensics & incident-response toolkit.** Collects cloud-native logs and
 artifacts from AWS, Azure, GCP, and Kubernetes, parses and normalizes them to
 **Elastic Common Schema (ECS) v8**, runs cross-cloud analysis, and exports
@@ -78,7 +80,7 @@ The tool is a three-stage pipeline plus analysis and export on top:
 | **Collector** | Fetches raw records from a provider API/log source; writes `raw/<dataset>.jsonl`. |
 | **Parser** | Maps one native record -> a `ForensicEvent` (ECS). Registered by dataset name. |
 | **Dataset** | A `provider.service` string, e.g. `aws.cloudtrail`. Also the raw filename stem — how `parse` picks a parser. |
-| **Normalizer** | Enrichment pass (network direction now; GeoIP/ASN/rDNS are pluggable hooks). |
+| **Normalizer** | Enrichment pass: network direction always; opt-in GeoIP/ASN, reverse-DNS, and IOC matching. |
 | **Exporter** | Serializes `ForensicEvent`s to jsonl/csv/STIX/ES-bulk/Citadel. |
 
 ---
@@ -215,6 +217,24 @@ cumulonimbus parse RAW_DIR -o OUTPUT_DIR [--dataset NAME]
   `OUTPUT_DIR/ecs/<dataset>.ecs.jsonl`.
 - Point `RAW_DIR` at the `raw/` folder created by `collect`.
 - `--dataset` forces one parser for all files (useful for oddly-named inputs).
+
+**Enrichment** (opt-in flags on `parse`):
+
+```bash
+cumulonimbus parse ./case/raw -o ./case \
+  --geoip-city GeoLite2-City.mmdb --geoip-asn GeoLite2-ASN.mmdb \
+  --rdns \
+  --ioc iocs.txt
+```
+
+| Flag | Effect |
+|------|--------|
+| `--geoip-city` / `--geoip-asn` | fill `source/destination.geo.*` and `.as_number` from MaxMind DBs (needs `[geoip]` extra) |
+| `--rdns` | reverse-DNS public IPs into `.domain` (cached; makes network lookups) |
+| `--ioc FILE` | flag events whose src/dst IP matches an indicator; sets `threat.matched` and elevates `event.kind` to `alert`. FILE is IP-per-line or a STIX 2.x bundle |
+
+Network-direction tagging always runs. Enrichers are best-effort — a lookup
+failure never aborts the run.
 
 ### `analyze`
 
@@ -470,11 +490,12 @@ pip install -e ".[dev]"
 pytest -q
 ```
 
-41 unit tests cover every parser (with golden fixtures), the normalizer, all
-analysis passes, every export encoder, and the AWS collectors end-to-end
-against **moto**-mocked APIs (EC2, IAM, S3, Lambda, RDS). File-based K8s
-collectors (audit, etcd) are tested directly; the remaining SDK-backed
-collectors are import-guarded. moto tests self-skip if moto is absent.
+58 unit tests cover every parser (with golden fixtures), the normalizer, all
+analysis passes, every export encoder, the enrichers, and all collectors. AWS
+collectors run end-to-end against **moto**-mocked APIs (EC2, IAM, S3, Lambda,
+RDS); Azure/GCP/Kubernetes collectors run against injected fake SDK modules;
+file-based K8s collectors (audit, etcd) are tested directly. Also run in CI on
+Python 3.9–3.12 with a ruff lint gate.
 
 ---
 
@@ -525,7 +546,7 @@ cumulonimbus/
 ## Roadmap
 
 - SaaS audit logs (Okta, GitHub, Microsoft 365)
-- GeoIP/ASN/rDNS enrichers wired to real providers (MaxMind)
+- Incremental collection (bookmark last run per dataset)
 - Forensic snapshot automation (EBS / Azure Disk / GCE Disk)
 - Container/etcd forensics for Kubernetes
 - Anomaly detection on user behavior and network flows

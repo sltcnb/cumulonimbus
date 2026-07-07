@@ -1,6 +1,10 @@
 import cumulonimbus.providers.aws.parsers  # noqa: F401
 from cumulonimbus.providers.aws.parsers.inventory import (
-    EC2Parser, IAMParser, LambdaParser, RDSParser)
+    EC2Parser,
+    IAMParser,
+    LambdaParser,
+    RDSParser,
+)
 from cumulonimbus.providers.aws.parsers.s3access import S3AccessParser
 
 

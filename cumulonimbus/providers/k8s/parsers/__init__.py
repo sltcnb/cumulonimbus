@@ -16,9 +16,17 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from cumulonimbus.core.parser import Parser, register
-from cumulonimbus.ecs.schema import (Cloud, Container, ContainerImage, Event,
-                                     ForensicEvent, Host, Orchestrator,
-                                     OrchestratorResource, User)
+from cumulonimbus.ecs.schema import (
+    Cloud,
+    Container,
+    ContainerImage,
+    Event,
+    ForensicEvent,
+    Host,
+    Orchestrator,
+    OrchestratorResource,
+    User,
+)
 
 # Verbs that mutate cluster state.
 _WRITE_VERBS = {"create", "update", "patch", "delete", "deletecollection"}

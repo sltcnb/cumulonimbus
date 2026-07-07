@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from cumulonimbus.core.parser import Parser, register
-from cumulonimbus.ecs.schema import (Cloud, Event, ForensicEvent, Host, User)
+from cumulonimbus.ecs.schema import Cloud, Event, ForensicEvent, Host, User
 
 # Event names that represent authentication.
 _AUTH_EVENTS = {"ConsoleLogin", "AssumeRole", "GetSessionToken",

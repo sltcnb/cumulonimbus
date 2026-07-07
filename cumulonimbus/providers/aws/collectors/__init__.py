@@ -3,7 +3,11 @@
 from cumulonimbus.providers.aws.collectors.cloudtrail import CloudTrailCollector
 from cumulonimbus.providers.aws.collectors.guardduty import GuardDutyCollector
 from cumulonimbus.providers.aws.collectors.inventory import (
-    EC2Collector, IAMCollector, LambdaCollector, RDSCollector)
+    EC2Collector,
+    IAMCollector,
+    LambdaCollector,
+    RDSCollector,
+)
 from cumulonimbus.providers.aws.collectors.s3logs import S3LogCollector
 
 # API-only collectors runnable via `aws collect --service <name>`.

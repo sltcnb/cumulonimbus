@@ -116,9 +116,13 @@ class NSGFlowParser(Parser):
                 return None
             ts, s_ip, d_ip, s_p, d_p, proto, direction, decision = parts[:8]
         elif isinstance(record, dict):
-            ts = record.get("time"); s_ip = record.get("srcIp"); d_ip = record.get("dstIp")
-            s_p = record.get("srcPort"); d_p = record.get("dstPort")
-            proto = record.get("protocol"); direction = record.get("direction")
+            ts = record.get("time")
+            s_ip = record.get("srcIp")
+            d_ip = record.get("dstIp")
+            s_p = record.get("srcPort")
+            d_p = record.get("dstPort")
+            proto = record.get("protocol")
+            direction = record.get("direction")
             decision = record.get("decision")
         else:
             return None
