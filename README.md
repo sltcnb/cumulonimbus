@@ -1,6 +1,11 @@
 <p align="center"><img src="docs/banner.svg" alt="Cumulonimbus" width="100%"></p>
 
-<p align="center"><img src="docs/cumulonimbus-pipeline.svg" alt="Cumulonimbus pipeline" width="100%"></p>
+## Architecture
+
+```mermaid
+flowchart LR
+  collect["collect<br/><i>AWS · Azure · GCP · K8s</i>"] --> parse["parse<br/><i>→ ECS v8</i>"] --> analyze["analyze<br/><i>cross-cloud</i>"] --> export["export<br/><i>jsonl · csv · STIX</i>"] --> push["push<br/><i>ES · Splunk</i>"]
+```
 
 
 ## Demo
