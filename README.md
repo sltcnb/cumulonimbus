@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/banner.svg" alt="Cumulonimbus" width="100%"></p>
+
 # Cumulonimbus
 
 [![CI](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml/badge.svg)](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml)
