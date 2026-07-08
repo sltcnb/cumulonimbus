@@ -1,17 +1,3 @@
-<p align="center"><img src="docs/banner.png" alt="Cumulonimbus" width="100%"></p>
-
-## Architecture
-
-```mermaid
-flowchart LR
-  collect["collect<br/><i>AWS · Azure · GCP · K8s</i>"] --> parse["parse<br/><i>→ ECS v8</i>"] --> analyze["analyze<br/><i>cross-cloud</i>"] --> export["export<br/><i>jsonl · csv · STIX</i>"] --> push["push<br/><i>ES · Splunk</i>"]
-```
-
-
-## Demo
-
-<p align="center"><img src="docs/demo.gif" alt="cumulonimbus demo" width="100%"></p>
-
 # Cumulonimbus
 
 [![CI](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml/badge.svg)](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml)
@@ -25,6 +11,17 @@ Named after the storm cloud — because that's usually what an IR engagement
 looks like.
 
 ---
+
+## Demo
+
+<p align="center"><img src="docs/demo.gif" alt="cumulonimbus demo" width="100%"></p>
+
+## Architecture
+
+```mermaid
+flowchart LR
+  collect["collect<br/><i>AWS · Azure · GCP · K8s</i>"] --> parse["parse<br/><i>→ ECS v8</i>"] --> analyze["analyze<br/><i>cross-cloud</i>"] --> export["export<br/><i>jsonl · csv · STIX</i>"] --> push["push<br/><i>ES · Splunk</i>"]
+```
 
 ## Table of contents
 
