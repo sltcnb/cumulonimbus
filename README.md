@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/banner.svg" alt="Cumulonimbus" width="100%"></p>
+<p align="center"><img src="docs/banner.png" alt="Cumulonimbus" width="100%"></p>
 
 ## Architecture
 
