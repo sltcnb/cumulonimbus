@@ -16,6 +16,9 @@ from cumulonimbus.ecs.schema import Cloud, Event, ForensicEvent, Host, Network, 
 # Cloud Audit method names that authenticate a session.
 _AUTH_METHODS = {"google.iam.credentials", "SetIamPolicy"}
 
+# IANA protocol number -> transport name.
+_TRANSPORT = {6: "tcp", 17: "udp", 1: "icmp", 58: "ipv6-icmp"}
+
 
 @register("gcp.audit")
 class AuditLogParser(Parser):
@@ -56,13 +59,15 @@ class VPCFlowParser(Parser):
         conn = jp.get("connection") or {}
         if "src_ip" not in conn and "dest_ip" not in conn:
             return None
+        iana = _int(conn.get("protocol"))
         return ForensicEvent(
             **{"@timestamp": r.get("timestamp") or jp.get("start_time")},
             event=Event(action="flow", category=["network"], type=["connection"],
                         provider="gcp", dataset="gcp.vpcflow"),
             source=Host(ip=conn.get("src_ip"), port=_int(conn.get("src_port"))),
             destination=Host(ip=conn.get("dest_ip"), port=_int(conn.get("dest_port"))),
-            network=Network(protocol=str(conn.get("protocol")) if conn.get("protocol") else None,
+            network=Network(transport=_TRANSPORT.get(iana),
+                            iana_number=iana,
                             bytes=_int(jp.get("bytes_sent")),
                             packets=_int(jp.get("packets_sent"))),
             cloud=Cloud(provider="gcp"),
