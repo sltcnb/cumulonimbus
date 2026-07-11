@@ -50,6 +50,9 @@ def test_vpcflow_line_format():
     assert ev["source"]["ip"] == "10.0.1.42"
     assert ev["destination"]["port"] == 443
     assert ev["network"]["transport"] == "tcp"
+    # IANA protocol number goes in network.iana_number, not network.protocol.
+    assert ev["network"]["iana_number"] == 6
+    assert "protocol" not in ev["network"]
     assert ev["network"]["bytes"] == 1024
     assert ev["event"]["outcome"] == "success"
 

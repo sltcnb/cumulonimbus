@@ -43,6 +43,7 @@ class VPCFlowParser(Parser):
             return None
 
         proto = str(record.get("protocol", ""))
+        proto_num = _to_int(proto)
         start = _to_int(record.get("start"))
         ts = (datetime.fromtimestamp(start, tz=timezone.utc).isoformat()
               if start else None)
@@ -63,7 +64,7 @@ class VPCFlowParser(Parser):
             destination=Host(ip=record.get("dstaddr"), port=_to_int(record.get("dstport"))),
             network=Network(
                 transport=_PROTO.get(proto),
-                protocol=proto or None,
+                iana_number=proto_num,
                 bytes=_to_int(record.get("bytes")),
                 packets=_to_int(record.get("packets")),
             ),

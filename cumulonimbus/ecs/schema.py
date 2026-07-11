@@ -49,8 +49,9 @@ class User(_Base):
 
 
 class Network(_Base):
-    transport: Optional[str] = None
-    protocol: Optional[str] = None
+    transport: Optional[str] = None  # ECS: L4 transport name, e.g. "tcp"
+    protocol: Optional[str] = None  # ECS: L7 application protocol name, e.g. "http"
+    iana_number: Optional[int] = None  # ECS: IANA protocol number, e.g. 6 for TCP
     bytes: Optional[int] = None
     packets: Optional[int] = None
     direction: Optional[str] = None
