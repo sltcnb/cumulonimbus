@@ -375,6 +375,8 @@ def push(ecs_input, target, url, token, case_id, es_index, verify):
     events = _load_ecs(Path(ecs_input))
     headers = {}
     if target == "splunk-hec":
+        if not token:
+            raise click.ClickException("--token is required for --target splunk-hec")
         headers["Authorization"] = f"Splunk {token}"
         body = "".join(json.dumps({"event": e}) for e in events)
         headers["Content-Type"] = "application/json"
