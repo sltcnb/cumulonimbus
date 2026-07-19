@@ -18,8 +18,13 @@ class Collector(ABC):
     #: dataset name, e.g. "aws.cloudtrail" — also the raw filename stem.
     dataset: str = "unknown"
 
-    def __init__(self, *, start_time: Optional[datetime] = None,
-                 end_time: Optional[datetime] = None, region: Optional[str] = None):
+    def __init__(
+        self,
+        *,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        region: Optional[str] = None,
+    ):
         self.start_time = start_time
         self.end_time = end_time
         self.region = region

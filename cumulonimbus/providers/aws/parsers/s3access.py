@@ -36,8 +36,7 @@ def _split(line: str) -> Optional[list[str]]:
 def _parse_time(raw: str) -> Optional[str]:
     # e.g. 06/Feb/2024:00:00:38 +0000
     try:
-        return datetime.strptime(raw, "%d/%b/%Y:%H:%M:%S %z").astimezone(
-            timezone.utc).isoformat()
+        return datetime.strptime(raw, "%d/%b/%Y:%H:%M:%S %z").astimezone(timezone.utc).isoformat()
     except ValueError:
         return None
 
@@ -52,8 +51,18 @@ class S3AccessParser(Parser):
             parts = _split(str(record))
             if not parts or len(parts) < 8:
                 return None
-            keys = ["bucket_owner", "bucket", "time", "remote_ip", "requester",
-                    "request_id", "operation", "key", "request_uri", "http_status"]
+            keys = [
+                "bucket_owner",
+                "bucket",
+                "time",
+                "remote_ip",
+                "requester",
+                "request_id",
+                "operation",
+                "key",
+                "request_uri",
+                "http_status",
+            ]
             fields = dict(zip(keys, parts))
 
         status = fields.get("http_status")
@@ -69,19 +78,28 @@ class S3AccessParser(Parser):
         ts = _parse_time(raw_time) or (raw_time or None)
         return ForensicEvent(
             **{"@timestamp": ts},
-            event=Event(action=op, category=["file"],
-                        type=["access"], outcome=outcome,
-                        provider="aws", dataset="aws.s3access"),
-            source=Host(ip=fields.get("remote_ip")) if fields.get("remote_ip") not in (None, "-") else None,
+            event=Event(
+                action=op,
+                category=["file"],
+                type=["access"],
+                outcome=outcome,
+                provider="aws",
+                dataset="aws.s3access",
+            ),
+            source=Host(ip=fields.get("remote_ip"))
+            if fields.get("remote_ip") not in (None, "-")
+            else None,
             user=None,
             cloud=Cloud(provider="aws", service_name="s3"),
-            aws={"s3": {
-                "bucket": fields.get("bucket"),
-                "bucket_owner": fields.get("bucket_owner"),
-                "requester": fields.get("requester"),
-                "operation": op,
-                "key": fields.get("key"),
-                "request_uri": fields.get("request_uri"),
-                "http_status": status,
-            }},
+            aws={
+                "s3": {
+                    "bucket": fields.get("bucket"),
+                    "bucket_owner": fields.get("bucket_owner"),
+                    "requester": fields.get("requester"),
+                    "operation": op,
+                    "key": fields.get("key"),
+                    "request_uri": fields.get("request_uri"),
+                    "http_status": status,
+                }
+            },
         )

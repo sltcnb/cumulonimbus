@@ -12,8 +12,13 @@ from cumulonimbus.core.parser import Parser, register
 from cumulonimbus.ecs.schema import Cloud, Event, ForensicEvent, Host, User
 
 # Event names that represent authentication.
-_AUTH_EVENTS = {"ConsoleLogin", "AssumeRole", "GetSessionToken",
-                "AssumeRoleWithSAML", "AssumeRoleWithWebIdentity"}
+_AUTH_EVENTS = {
+    "ConsoleLogin",
+    "AssumeRole",
+    "GetSessionToken",
+    "AssumeRoleWithSAML",
+    "AssumeRoleWithWebIdentity",
+}
 
 
 def _outcome(rec: dict[str, Any]) -> str:
@@ -28,8 +33,11 @@ def _outcome(rec: dict[str, Any]) -> str:
 
 def _user(rec: dict[str, Any]) -> Optional[User]:
     ident = rec.get("userIdentity") or {}
-    name = (ident.get("userName") or ident.get("arn")
-            or ((ident.get("sessionContext") or {}).get("sessionIssuer") or {}).get("userName"))
+    name = (
+        ident.get("userName")
+        or ident.get("arn")
+        or ((ident.get("sessionContext") or {}).get("sessionIssuer") or {}).get("userName")
+    )
     uid = ident.get("principalId") or ident.get("accountId")
     if not (name or uid):
         return None
@@ -44,8 +52,7 @@ class CloudTrailParser(Parser):
             return None
         category = ["authentication"] if name in _AUTH_EVENTS else ["iam"]
         read_only = record.get("readOnly")
-        etype = ["access"] if name in _AUTH_EVENTS else (
-            ["info"] if read_only else ["change"])
+        etype = ["access"] if name in _AUTH_EVENTS else (["info"] if read_only else ["change"])
 
         src_ip = record.get("sourceIPAddress")
         source = Host(ip=src_ip) if src_ip and _looks_like_ip(src_ip) else None
@@ -68,16 +75,18 @@ class CloudTrailParser(Parser):
                 region=record.get("awsRegion"),
                 service_name=record.get("eventSource"),
             ),
-            aws={"cloudtrail": {
-                "event_source": record.get("eventSource"),
-                "event_name": name,
-                "event_id": record.get("eventID"),
-                "read_only": read_only,
-                "error_code": record.get("errorCode"),
-                "user_agent": record.get("userAgent"),
-                "request_parameters": record.get("requestParameters"),
-                "response_elements": record.get("responseElements"),
-            }},
+            aws={
+                "cloudtrail": {
+                    "event_source": record.get("eventSource"),
+                    "event_name": name,
+                    "event_id": record.get("eventID"),
+                    "read_only": read_only,
+                    "error_code": record.get("errorCode"),
+                    "user_agent": record.get("userAgent"),
+                    "request_parameters": record.get("requestParameters"),
+                    "response_elements": record.get("responseElements"),
+                }
+            },
         )
 
 

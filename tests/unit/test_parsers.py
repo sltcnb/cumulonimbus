@@ -36,16 +36,25 @@ def test_cloudtrail_failure_outcome():
 
 def test_cloudtrail_service_ip_dropped():
     # sourceIPAddress that is a service name must not become source.ip
-    ev = CloudTrailParser().parse_record({
-        "eventName": "AssumeRole", "eventTime": "2024-01-01T00:00:00Z",
-        "sourceIPAddress": "cloudtrail.amazonaws.com",
-    }).to_ecs()
+    ev = (
+        CloudTrailParser()
+        .parse_record(
+            {
+                "eventName": "AssumeRole",
+                "eventTime": "2024-01-01T00:00:00Z",
+                "sourceIPAddress": "cloudtrail.amazonaws.com",
+            }
+        )
+        .to_ecs()
+    )
     assert "source" not in ev
 
 
 def test_vpcflow_line_format():
-    line = ("2 123456789012 eni-abc 10.0.1.42 198.51.100.10 54321 443 6 "
-            "10 1024 1704067200 1704067260 ACCEPT OK")
+    line = (
+        "2 123456789012 eni-abc 10.0.1.42 198.51.100.10 54321 443 6 "
+        "10 1024 1704067200 1704067260 ACCEPT OK"
+    )
     ev = VPCFlowParser().parse_record(line).to_ecs()
     assert ev["source"]["ip"] == "10.0.1.42"
     assert ev["destination"]["port"] == 443
@@ -59,21 +68,44 @@ def test_vpcflow_line_format():
 
 def test_vpcflow_nodata_skipped():
     fields = ("2 - - - - - - - - - 1704067200 1704067260 - NODATA").split()
-    rec = dict(zip(
-        ["version", "account_id", "interface_id", "srcaddr", "dstaddr",
-         "srcport", "dstport", "protocol", "packets", "bytes", "start",
-         "end", "action", "log_status"], fields))
+    rec = dict(
+        zip(
+            [
+                "version",
+                "account_id",
+                "interface_id",
+                "srcaddr",
+                "dstaddr",
+                "srcport",
+                "dstport",
+                "protocol",
+                "packets",
+                "bytes",
+                "start",
+                "end",
+                "action",
+                "log_status",
+            ],
+            fields,
+        )
+    )
     assert VPCFlowParser().parse_record(rec) is None
 
 
 def test_guardduty_finding():
     rec = {
         "Type": "UnauthorizedAccess:EC2/SSHBruteForce",
-        "Id": "finding-1", "AccountId": "123456789012", "Region": "us-east-1",
-        "Severity": 8.0, "Title": "SSH brute force",
+        "Id": "finding-1",
+        "AccountId": "123456789012",
+        "Region": "us-east-1",
+        "Severity": 8.0,
+        "Title": "SSH brute force",
         "UpdatedAt": "2024-01-15T11:00:00Z",
-        "Service": {"Action": {"NetworkConnectionAction": {
-            "RemoteIpDetails": {"IpAddressV4": "203.0.113.99"}}}},
+        "Service": {
+            "Action": {
+                "NetworkConnectionAction": {"RemoteIpDetails": {"IpAddressV4": "203.0.113.99"}}
+            }
+        },
     }
     ev = GuardDutyParser().parse_record(rec).to_ecs()
     assert ev["event"]["kind"] == "alert"
@@ -88,6 +120,7 @@ def test_registry_lookup():
 
 def test_normalizer_tags_direction():
     ev = VPCFlowParser().parse_record(
-        "2 acct eni 10.0.1.5 8.8.8.8 100 53 17 1 60 1704067200 1704067260 ACCEPT OK")
+        "2 acct eni 10.0.1.5 8.8.8.8 100 53 17 1 60 1704067200 1704067260 ACCEPT OK"
+    )
     list(Normalizer().run([ev]))
     assert ev.network.direction == "outbound"

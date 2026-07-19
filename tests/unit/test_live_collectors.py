@@ -31,15 +31,17 @@ def test_azure_activity_collector(monkeypatch, tmp_path):
 
     class FakeEntry:
         def as_dict(self):
-            return {"operationName": {"value": "Microsoft.Compute/x/delete"},
-                    "eventTimestamp": "2024-02-01T10:00:00Z", "caller": "bob",
-                    "status": {"value": "Succeeded"},
-                    "resourceId": "/subscriptions/sub-9/rg/x"}
+            return {
+                "operationName": {"value": "Microsoft.Compute/x/delete"},
+                "eventTimestamp": "2024-02-01T10:00:00Z",
+                "caller": "bob",
+                "status": {"value": "Succeeded"},
+                "resourceId": "/subscriptions/sub-9/rg/x",
+            }
 
     class FakeClient:
         def __init__(self, cred, sub):
-            self.activity_logs = types.SimpleNamespace(
-                list=lambda filter=None: iter([FakeEntry()]))
+            self.activity_logs = types.SimpleNamespace(list=lambda filter=None: iter([FakeEntry()]))
 
     mod = _mod(monkeypatch, "azure.mgmt.monitor")
     mod.MonitorManagementClient = FakeClient
@@ -57,23 +59,25 @@ def test_azure_signin_collector_paginates(monkeypatch):
     pages = {
         "https://graph.microsoft.com/v1.0/auditLogs/signIns": {
             "value": [{"userPrincipalName": "a@x"}],
-            "@odata.nextLink": "https://graph.microsoft.com/next"},
+            "@odata.nextLink": "https://graph.microsoft.com/next",
+        },
         "https://graph.microsoft.com/next": {"value": [{"userPrincipalName": "b@x"}]},
     }
 
     class FakeResp:
         def __init__(self, url):
             self._url = url
+
         def raise_for_status(self):
             pass
+
         def json(self):
             return pages[self._url]
 
     requests_mod = _mod(monkeypatch, "requests")
     requests_mod.get = lambda url, headers=None, timeout=None: FakeResp(url)
 
-    cred = types.SimpleNamespace(
-        get_token=lambda scope: types.SimpleNamespace(token="t"))
+    cred = types.SimpleNamespace(get_token=lambda scope: types.SimpleNamespace(token="t"))
     recs = list(SignInCollector(credential=cred).collect())
     assert [r["userPrincipalName"] for r in recs] == ["a@x", "b@x"]
 
@@ -84,15 +88,20 @@ def test_gcp_audit_collector(monkeypatch, tmp_path):
 
     class FakeEntry:
         def to_api_repr(self):
-            return {"timestamp": "2024-03-01T10:00:00Z",
-                    "protoPayload": {"methodName": "storage.objects.get",
-                                     "authenticationInfo": {"principalEmail": "s@x"},
-                                     "status": {}},
-                    "resource": {"labels": {"project_id": "p1"}}}
+            return {
+                "timestamp": "2024-03-01T10:00:00Z",
+                "protoPayload": {
+                    "methodName": "storage.objects.get",
+                    "authenticationInfo": {"principalEmail": "s@x"},
+                    "status": {},
+                },
+                "resource": {"labels": {"project_id": "p1"}},
+            }
 
     class FakeClient:
         def __init__(self, project=None, credentials=None):
             pass
+
         def list_entries(self, filter_=None):
             return iter([FakeEntry()])
 
@@ -121,6 +130,7 @@ def test_gcp_scc_collector(monkeypatch):
     class FakeSCC:
         def __init__(self, credentials=None):
             pass
+
         def list_findings(self, request=None):
             return iter([FakeResult()])
 
@@ -143,14 +153,17 @@ def test_k8s_event_collector(monkeypatch):
 
     class FakeApiClient:
         def sanitize_for_serialization(self, o):
-            return {"reason": "FailedMount", "type": "Warning",
-                    "involvedObject": {"kind": "Pod", "name": "web"}}
+            return {
+                "reason": "FailedMount",
+                "type": "Warning",
+                "involvedObject": {"kind": "Pod", "name": "web"},
+            }
 
     kmod = _mod(monkeypatch, "kubernetes")
     kmod.client = types.SimpleNamespace(CoreV1Api=FakeCoreV1, ApiClient=FakeApiClient)
     kmod.config = types.SimpleNamespace(
-        load_kube_config=lambda config_file=None: None,
-        load_incluster_config=lambda: None)
+        load_kube_config=lambda config_file=None: None, load_incluster_config=lambda: None
+    )
 
     recs = list(EventCollector(kubeconfig="/dev/null").collect())
     assert recs[0]["reason"] == "FailedMount"

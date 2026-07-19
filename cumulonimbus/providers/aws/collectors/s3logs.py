@@ -14,8 +14,9 @@ from cumulonimbus.core.collector import Collector
 
 
 class S3LogCollector(Collector):
-    def __init__(self, *, bucket: str, prefix: str = "", dataset: str = "aws.s3access",
-                 session=None, **kw):
+    def __init__(
+        self, *, bucket: str, prefix: str = "", dataset: str = "aws.s3access", session=None, **kw
+    ):
         super().__init__(**kw)
         self.bucket = bucket
         self.prefix = prefix
@@ -24,6 +25,7 @@ class S3LogCollector(Collector):
 
     def _client(self):
         import boto3
+
         session = self._session or boto3.Session()
         return session.client("s3", region_name=self.region)
 

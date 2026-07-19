@@ -56,15 +56,23 @@ def aws():
 
 
 @aws.command("collect")
-@click.option("--service", type=click.Choice(
-    ["cloudtrail", "guardduty", "ec2", "iam", "lambda", "rds", "all"]),
-    default="all", show_default=True)
+@click.option(
+    "--service",
+    type=click.Choice(["cloudtrail", "guardduty", "ec2", "iam", "lambda", "rds", "all"]),
+    default="all",
+    show_default=True,
+)
 @click.option("--profile", default=None, help="AWS named profile.")
 @click.option("--region", default=None, help="AWS region.")
 @click.option("--start-time", callback=_parse_time, help="ISO-8601 lower bound.")
 @click.option("--end-time", callback=_parse_time, help="ISO-8601 upper bound.")
-@click.option("--output", "-o", type=click.Path(file_okay=False), required=True,
-              help="Case directory (raw/ created inside).")
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(file_okay=False),
+    required=True,
+    help="Case directory (raw/ created inside).",
+)
 def aws_collect(service, profile, region, start_time, end_time, output):
     """Collect AWS logs into <output>/raw/."""
     try:
@@ -77,8 +85,9 @@ def aws_collect(service, profile, region, start_time, end_time, output):
     raw_dir = Path(output) / "raw"
     services = list(COLLECTORS) if service == "all" else [service]
     for name in services:
-        collector = COLLECTORS[name](session=session, region=region,
-                                     start_time=start_time, end_time=end_time)
+        collector = COLLECTORS[name](
+            session=session, region=region, start_time=start_time, end_time=end_time
+        )
         console.print(f"[cyan]collecting[/] {name}…")
         try:
             n = collector.collect_to(raw_dir)
@@ -90,9 +99,13 @@ def aws_collect(service, profile, region, start_time, end_time, output):
 @aws.command("collect-s3")
 @click.option("--bucket", required=True, help="Log bucket name.")
 @click.option("--prefix", default="", help="Key prefix to scope objects.")
-@click.option("--dataset", type=click.Choice(["aws.s3access", "aws.vpcflow"]),
-              default="aws.s3access", show_default=True,
-              help="Which line parser these logs feed later.")
+@click.option(
+    "--dataset",
+    type=click.Choice(["aws.s3access", "aws.vpcflow"]),
+    default="aws.s3access",
+    show_default=True,
+    help="Which line parser these logs feed later.",
+)
 @click.option("--profile", default=None)
 @click.option("--region", default=None)
 @click.option("--output", "-o", type=click.Path(file_okay=False), required=True)
@@ -106,8 +119,9 @@ def aws_collect_s3(bucket, prefix, dataset, profile, region, output):
 
     session = boto3.Session(profile_name=profile)
     raw_dir = Path(output) / "raw"
-    collector = S3LogCollector(bucket=bucket, prefix=prefix, dataset=dataset,
-                               session=session, region=region)
+    collector = S3LogCollector(
+        bucket=bucket, prefix=prefix, dataset=dataset, session=session, region=region
+    )
     console.print(f"[cyan]collecting[/] s3://{bucket}/{prefix} -> {dataset}…")
     n = collector.collect_to(raw_dir)
     console.print(f"  [green]{n}[/] lines -> {raw_dir / (dataset + '.jsonl')}")
@@ -134,8 +148,12 @@ def azure():
 
 
 @azure.command("collect")
-@click.option("--service", type=click.Choice(["activity", "signin", "audit", "all"]),
-              default="all", show_default=True)
+@click.option(
+    "--service",
+    type=click.Choice(["activity", "signin", "audit", "all"]),
+    default="all",
+    show_default=True,
+)
 @click.option("--subscription", default=None, help="Subscription ID (activity log).")
 @click.option("--tenant", default=None, help="Tenant ID.")
 @click.option("--start-time", callback=_parse_time)
@@ -144,10 +162,15 @@ def azure():
 def azure_collect(service, subscription, tenant, start_time, end_time, output):
     """Collect Azure logs into <output>/raw/."""
     from cumulonimbus.providers.azure.collectors import COLLECTORS
+
     _run_collectors(
-        COLLECTORS, [service], output,
-        lambda cls: cls(subscription_id=subscription, tenant_id=tenant,
-                        start_time=start_time, end_time=end_time))
+        COLLECTORS,
+        [service],
+        output,
+        lambda cls: cls(
+            subscription_id=subscription, tenant_id=tenant, start_time=start_time, end_time=end_time
+        ),
+    )
 
 
 # -- GCP ------------------------------------------------------------------
@@ -157,8 +180,12 @@ def gcp():
 
 
 @gcp.command("collect")
-@click.option("--service", type=click.Choice(["audit", "vpcflow", "scc", "all"]),
-              default="all", show_default=True)
+@click.option(
+    "--service",
+    type=click.Choice(["audit", "vpcflow", "scc", "all"]),
+    default="all",
+    show_default=True,
+)
 @click.option("--project", required=True, help="GCP project ID.")
 @click.option("--start-time", callback=_parse_time)
 @click.option("--end-time", callback=_parse_time)
@@ -166,9 +193,13 @@ def gcp():
 def gcp_collect(service, project, start_time, end_time, output):
     """Collect GCP logs into <output>/raw/."""
     from cumulonimbus.providers.gcp.collectors import COLLECTORS
+
     _run_collectors(
-        COLLECTORS, [service], output,
-        lambda cls: cls(project=project, start_time=start_time, end_time=end_time))
+        COLLECTORS,
+        [service],
+        output,
+        lambda cls: cls(project=project, start_time=start_time, end_time=end_time),
+    )
 
 
 # -- Kubernetes -------------------------------------------------------------
@@ -178,18 +209,25 @@ def k8s():
 
 
 @k8s.command("collect")
-@click.option("--service", type=click.Choice(
-    ["event", "audit", "container", "etcd", "all"]),
-    default="event", show_default=True)
+@click.option(
+    "--service",
+    type=click.Choice(["event", "audit", "container", "etcd", "all"]),
+    default="event",
+    show_default=True,
+)
 @click.option("--kubeconfig", default=None, help="Path to kubeconfig (event/container).")
 @click.option("--in-cluster", is_flag=True, help="Use in-cluster service account.")
 @click.option("--audit-log", default=None, help="Path to API-server audit JSON-lines file.")
-@click.option("--etcd-export", default=None,
-              help="Path to a decoded etcd snapshot (JSON lines/array of {key,value}).")
+@click.option(
+    "--etcd-export",
+    default=None,
+    help="Path to a decoded etcd snapshot (JSON lines/array of {key,value}).",
+)
 @click.option("--output", "-o", type=click.Path(file_okay=False), required=True)
 def k8s_collect(service, kubeconfig, in_cluster, audit_log, etcd_export, output):
     """Collect Kubernetes evidence into <output>/raw/."""
     from cumulonimbus.providers.k8s.collectors import COLLECTORS
+
     names = list(COLLECTORS) if service == "all" else [service]
 
     def factory(cls):
@@ -209,15 +247,20 @@ def k8s_collect(service, kubeconfig, in_cluster, audit_log, etcd_export, output)
 # -- parse ----------------------------------------------------------------
 @cli.command()
 @click.argument("raw_dir", type=click.Path(exists=True, file_okay=False))
-@click.option("--output", "-o", type=click.Path(file_okay=False), required=True,
-              help="Output dir for normalized ECS jsonl.")
-@click.option("--dataset", default=None,
-              help="Force a parser (default: infer from filename stem).")
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(file_okay=False),
+    required=True,
+    help="Output dir for normalized ECS jsonl.",
+)
+@click.option("--dataset", default=None, help="Force a parser (default: infer from filename stem).")
 @click.option("--geoip-city", default=None, help="MaxMind City .mmdb for GeoIP enrichment.")
 @click.option("--geoip-asn", default=None, help="MaxMind ASN .mmdb for ASN enrichment.")
 @click.option("--rdns", is_flag=True, help="Reverse-DNS public IPs (network lookups).")
-@click.option("--ioc", "ioc_file", default=None,
-              help="IOC file (IP-per-line or STIX bundle) to flag matches.")
+@click.option(
+    "--ioc", "ioc_file", default=None, help="IOC file (IP-per-line or STIX bundle) to flag matches."
+)
 def parse(raw_dir, output, dataset, geoip_city, geoip_asn, rdns, ioc_file):
     """Parse + normalize raw JSONL files into ECS events."""
     from cumulonimbus.core.normalizer import DEFAULT_ENRICHERS
@@ -230,14 +273,19 @@ def parse(raw_dir, output, dataset, geoip_city, geoip_asn, rdns, ioc_file):
     if geoip_city or geoip_asn:
         try:
             from cumulonimbus.core.enrichment import GeoIPEnricher
+
             enrichers.append(GeoIPEnricher(city_db=geoip_city, asn_db=geoip_asn))
         except ImportError:
-            raise click.ClickException("geoip2 not installed — `pip install cumulonimbus-dfir[geoip]`")
+            raise click.ClickException(
+                "geoip2 not installed — `pip install cumulonimbus-dfir[geoip]`"
+            )
     if rdns:
         from cumulonimbus.core.enrichment import ReverseDNSEnricher
+
         enrichers.append(ReverseDNSEnricher())
     if ioc_file:
         from cumulonimbus.core.enrichment import IOCEnricher
+
         enrichers.append(IOCEnricher.from_file(ioc_file))
         console.print(f"[dim]loaded {len(enrichers[-1].iocs)} IOCs[/]")
 
@@ -269,12 +317,14 @@ _ALL_FORMATS = list(FORMATS) + ["stix", "es-bulk", "citadel"]
 
 @cli.command()
 @click.argument("ecs_input", type=click.Path(exists=True))
-@click.option("--format", "fmt", type=click.Choice(_ALL_FORMATS), default="jsonl",
-              show_default=True)
+@click.option(
+    "--format", "fmt", type=click.Choice(_ALL_FORMATS), default="jsonl", show_default=True
+)
 @click.option("--output", "-o", type=click.Path(), required=True)
 @click.option("--gzip", "gz", is_flag=True, help="GZIP the output (jsonl/csv).")
-@click.option("--es-index", default="cumulonimbus", show_default=True,
-              help="Index name for es-bulk.")
+@click.option(
+    "--es-index", default="cumulonimbus", show_default=True, help="Index name for es-bulk."
+)
 @click.option("--case-id", default="", help="Case ID stamped into a Citadel bundle.")
 def export(ecs_input, fmt, output, gz, es_index, case_id):
     """Convert normalized ECS JSONL into another format."""
@@ -282,14 +332,17 @@ def export(ecs_input, fmt, output, gz, es_index, case_id):
     output = Path(output)
 
     if fmt in FORMATS:  # streaming jsonl / csv
+
         def _events():
             for rec in _load_ecs(ecs_input):
                 yield ForensicEvent(**rec)
+
         n = export_events(_events(), output, fmt=fmt, gz=gz)
         console.print(f"[green]{n}[/] events -> {output}")
         return
 
     from cumulonimbus.core import exports  # bundle formats need the full set
+
     events = _load_ecs(ecs_input)
     if fmt == "stix":
         text = exports.encode_stix(events)
@@ -305,8 +358,7 @@ def export(ecs_input, fmt, output, gz, es_index, case_id):
 # -- push to Citadel / Splunk -----------------------------------------------
 @cli.command("push")
 @click.argument("ecs_input", type=click.Path(exists=True))
-@click.option("--target", type=click.Choice(["citadel", "splunk-hec", "es-bulk"]),
-              required=True)
+@click.option("--target", type=click.Choice(["citadel", "splunk-hec", "es-bulk"]), required=True)
 @click.option("--url", required=True, help="Endpoint URL.")
 @click.option("--token", default=None, help="Auth token / HEC token / API key.")
 @click.option("--case-id", default="", help="Citadel case ID.")
@@ -348,9 +400,12 @@ def push(ecs_input, target, url, token, case_id, es_index, verify):
 # -- analyze --------------------------------------------------------------
 @cli.command()
 @click.argument("ecs_input", type=click.Path(exists=True))
-@click.option("--report", type=click.Choice(
-    ["all", "timeline", "users", "network", "privesc", "exfil", "correlate"]),
-    default="all", show_default=True)
+@click.option(
+    "--report",
+    type=click.Choice(["all", "timeline", "users", "network", "privesc", "exfil", "correlate"]),
+    default="all",
+    show_default=True,
+)
 @click.option("--json", "as_json", is_flag=True, help="Emit raw JSON.")
 @click.option("--limit", default=20, show_default=True, help="Rows for ranked reports.")
 def analyze(ecs_input, report, as_json, limit):
@@ -381,26 +436,47 @@ def analyze(ecs_input, report, as_json, limit):
         return
 
     if "users" in out:
-        t = Table("user", "events", "fails", "src IPs", "first seen", "last seen",
-                  title="User activity")
+        t = Table(
+            "user", "events", "fails", "src IPs", "first seen", "last seen", title="User activity"
+        )
         for name, u in sorted(out["users"].items(), key=lambda kv: -kv[1]["count"]):
-            t.add_row(str(name), str(u["count"]), str(u["failures"]),
-                      ", ".join(u["source_ips"][:3]), str(u["first_seen"]),
-                      str(u["last_seen"]))
+            t.add_row(
+                str(name),
+                str(u["count"]),
+                str(u["failures"]),
+                ", ".join(u["source_ips"][:3]),
+                str(u["first_seen"]),
+                str(u["last_seen"]),
+            )
         console.print(t)
     if "top_talkers" in out:
-        t = Table("source", "destination", "port", "bytes", "flows",
-                  title="Top talkers")
+        t = Table("source", "destination", "port", "bytes", "flows", title="Top talkers")
         for r in out["top_talkers"]:
-            t.add_row(str(r["source"]), str(r["destination"]), str(r["port"]),
-                      str(r["bytes"]), str(r["flows"]))
+            t.add_row(
+                str(r["source"]),
+                str(r["destination"]),
+                str(r["port"]),
+                str(r["bytes"]),
+                str(r["flows"]),
+            )
         console.print(t)
     if out.get("privesc"):
-        t = Table("time", "action", "user", "src IP", "outcome",
-                  title="[red]Privilege-escalation indicators[/]")
+        t = Table(
+            "time",
+            "action",
+            "user",
+            "src IP",
+            "outcome",
+            title="[red]Privilege-escalation indicators[/]",
+        )
         for r in out["privesc"]:
-            t.add_row(str(r["@timestamp"]), r["action"], str(r["user"]),
-                      str(r["source_ip"]), str(r["outcome"]))
+            t.add_row(
+                str(r["@timestamp"]),
+                r["action"],
+                str(r["user"]),
+                str(r["source_ip"]),
+                str(r["outcome"]),
+            )
         console.print(t)
     if out.get("exfil"):
         t = Table("time", "kind", "detail", title="[red]Exfiltration indicators[/]")
@@ -409,8 +485,7 @@ def analyze(ecs_input, report, as_json, limit):
             t.add_row(str(r["@timestamp"]), r["kind"], str(detail))
         console.print(t)
     if out.get("correlate"):
-        t = Table("kind", "value", "providers",
-                  title="[yellow]Cross-cloud correlation[/]")
+        t = Table("kind", "value", "providers", title="[yellow]Cross-cloud correlation[/]")
         for r in out["correlate"]:
             t.add_row(r["kind"], str(r["value"]), ", ".join(r["providers"]))
         console.print(t)
@@ -430,6 +505,7 @@ def parsers_cmd():
 def iam_policy():
     """Print the minimum AWS IAM policy required."""
     from cumulonimbus.providers.aws.iam_permissions import POLICY
+
     click.echo(json.dumps(POLICY, indent=2))
 
 

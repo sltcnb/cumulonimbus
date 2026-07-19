@@ -23,6 +23,7 @@ class _AzureCollector(Collector):
         if self._credential:
             return self._credential
         from azure.identity import DefaultAzureCredential
+
         return DefaultAzureCredential()
 
 
@@ -31,6 +32,7 @@ class ActivityLogCollector(_AzureCollector):
 
     def collect(self) -> Iterator[dict[str, Any]]:
         from azure.mgmt.monitor import MonitorManagementClient
+
         client = MonitorManagementClient(self._cred(), self.subscription_id)
         filt = []
         if self.start_time:
@@ -46,6 +48,7 @@ class _GraphCollector(_AzureCollector):
 
     def collect(self) -> Iterator[dict[str, Any]]:
         import requests
+
         token = self._cred().get_token("https://graph.microsoft.com/.default").token
         url = f"https://graph.microsoft.com/v1.0/{self.graph_path}"
         headers = {"Authorization": f"Bearer {token}"}

@@ -34,21 +34,32 @@ class AuditLogParser(Parser):
         is_auth = any(k in method for k in _AUTH_METHODS)
         return ForensicEvent(
             **{"@timestamp": r.get("timestamp")},
-            event=Event(action=method,
-                        category=["authentication"] if is_auth else ["configuration"],
-                        type=["access"] if is_auth else ["change"],
-                        outcome="failure" if status.get("code") else "success",
-                        provider="gcp", dataset="gcp.audit"),
-            user=User(name=auth.get("principalEmail"),
-                      email=auth.get("principalEmail")) if auth.get("principalEmail") else None,
+            event=Event(
+                action=method,
+                category=["authentication"] if is_auth else ["configuration"],
+                type=["access"] if is_auth else ["change"],
+                outcome="failure" if status.get("code") else "success",
+                provider="gcp",
+                dataset="gcp.audit",
+            ),
+            user=User(name=auth.get("principalEmail"), email=auth.get("principalEmail"))
+            if auth.get("principalEmail")
+            else None,
             source=Host(ip=meta.get("callerIp")) if meta.get("callerIp") else None,
-            cloud=Cloud(provider="gcp", account_id=labels.get("project_id"),
-                        service_name=payload.get("serviceName")),
-            gcp={"audit": {"method": method,
-                           "resource_name": payload.get("resourceName"),
-                           "caller_agent": meta.get("callerSuppliedUserAgent"),
-                           "severity": r.get("severity"),
-                           "status_message": status.get("message")}},
+            cloud=Cloud(
+                provider="gcp",
+                account_id=labels.get("project_id"),
+                service_name=payload.get("serviceName"),
+            ),
+            gcp={
+                "audit": {
+                    "method": method,
+                    "resource_name": payload.get("resourceName"),
+                    "caller_agent": meta.get("callerSuppliedUserAgent"),
+                    "severity": r.get("severity"),
+                    "status_message": status.get("message"),
+                }
+            },
         )
 
 
@@ -62,14 +73,21 @@ class VPCFlowParser(Parser):
         iana = _int(conn.get("protocol"))
         return ForensicEvent(
             **{"@timestamp": r.get("timestamp") or jp.get("start_time")},
-            event=Event(action="flow", category=["network"], type=["connection"],
-                        provider="gcp", dataset="gcp.vpcflow"),
+            event=Event(
+                action="flow",
+                category=["network"],
+                type=["connection"],
+                provider="gcp",
+                dataset="gcp.vpcflow",
+            ),
             source=Host(ip=conn.get("src_ip"), port=_int(conn.get("src_port"))),
             destination=Host(ip=conn.get("dest_ip"), port=_int(conn.get("dest_port"))),
-            network=Network(transport=_TRANSPORT.get(iana),
-                            iana_number=iana,
-                            bytes=_int(jp.get("bytes_sent")),
-                            packets=_int(jp.get("packets_sent"))),
+            network=Network(
+                transport=_TRANSPORT.get(iana),
+                iana_number=iana,
+                bytes=_int(jp.get("bytes_sent")),
+                packets=_int(jp.get("packets_sent")),
+            ),
             cloud=Cloud(provider="gcp"),
         )
 
@@ -84,15 +102,27 @@ class SCCParser(Parser):
         return ForensicEvent(
             **{"@timestamp": f.get("eventTime") or f.get("createTime")},
             message=f.get("description") or f.get("category"),
-            event=Event(action=f.get("category"), category=["intrusion_detection"],
-                        type=["indicator"], kind="alert",
-                        provider="gcp", dataset="gcp.scc"),
+            event=Event(
+                action=f.get("category"),
+                category=["intrusion_detection"],
+                type=["indicator"],
+                kind="alert",
+                provider="gcp",
+                dataset="gcp.scc",
+            ),
             source=Host(ip=access.get("callerIp")) if access.get("callerIp") else None,
             cloud=Cloud(provider="gcp", service_name="scc"),
-            threat={"severity_label": (f.get("severity") or "").lower() or None,
-                    "finding_class": f.get("findingClass")},
-            gcp={"scc": {"name": f.get("name"), "resource": f.get("resourceName"),
-                         "state": f.get("state")}},
+            threat={
+                "severity_label": (f.get("severity") or "").lower() or None,
+                "finding_class": f.get("findingClass"),
+            },
+            gcp={
+                "scc": {
+                    "name": f.get("name"),
+                    "resource": f.get("resourceName"),
+                    "state": f.get("state"),
+                }
+            },
         )
 
 
