@@ -491,6 +491,22 @@ def analyze(ecs_input, report, as_json, limit):
         for r in out["correlate"]:
             t.add_row(r["kind"], str(r["value"]), ", ".join(r["providers"]))
         console.print(t)
+    if "timeline" in out:
+        t = Table("time", "dataset", "action", "user", "source IP", "outcome", title="Timeline")
+        for ev in out["timeline"]:
+            event = ev.get("event") or {}
+            user = ev.get("user") or {}
+            source = ev.get("source") or {}
+            cloud = ev.get("cloud") or {}
+            t.add_row(
+                str(ev.get("@timestamp") or "-"),
+                str(event.get("dataset") or cloud.get("provider") or "-"),
+                str(event.get("action") or "-"),
+                str(user.get("name") or user.get("id") or "-"),
+                str(source.get("ip") or "-"),
+                str(event.get("outcome") or "-"),
+            )
+        console.print(t)
 
 
 # -- helpers --------------------------------------------------------------
