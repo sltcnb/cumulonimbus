@@ -1,15 +1,31 @@
 from cumulonimbus.core import analysis
 
 EVENTS = [
-    {"@timestamp": "2024-01-15T10:30:00Z", "event": {"action": "ConsoleLogin",
-     "outcome": "success"}, "user": {"name": "admin"}, "source": {"ip": "203.0.113.42"}},
-    {"@timestamp": "2024-01-15T10:31:00Z", "event": {"action": "PutUserPolicy",
-     "outcome": "failure"}, "user": {"name": "attacker"}, "source": {"ip": "203.0.113.42"}},
-    {"@timestamp": "2024-01-15T10:32:00Z", "event": {"action": "CreateAccessKey",
-     "outcome": "success"}, "user": {"name": "attacker"}, "source": {"ip": "10.0.0.9"}},
-    {"@timestamp": "2024-01-15T10:33:00Z", "event": {"action": "ACCEPT"},
-     "source": {"ip": "10.0.1.5"}, "destination": {"ip": "8.8.8.8", "port": 443},
-     "network": {"bytes": 200_000_000, "direction": "outbound"}},
+    {
+        "@timestamp": "2024-01-15T10:30:00Z",
+        "event": {"action": "ConsoleLogin", "outcome": "success"},
+        "user": {"name": "admin"},
+        "source": {"ip": "203.0.113.42"},
+    },
+    {
+        "@timestamp": "2024-01-15T10:31:00Z",
+        "event": {"action": "PutUserPolicy", "outcome": "failure"},
+        "user": {"name": "attacker"},
+        "source": {"ip": "203.0.113.42"},
+    },
+    {
+        "@timestamp": "2024-01-15T10:32:00Z",
+        "event": {"action": "CreateAccessKey", "outcome": "success"},
+        "user": {"name": "attacker"},
+        "source": {"ip": "10.0.0.9"},
+    },
+    {
+        "@timestamp": "2024-01-15T10:33:00Z",
+        "event": {"action": "ACCEPT"},
+        "source": {"ip": "10.0.1.5"},
+        "destination": {"ip": "8.8.8.8", "port": 443},
+        "network": {"bytes": 200_000_000, "direction": "outbound"},
+    },
 ]
 
 

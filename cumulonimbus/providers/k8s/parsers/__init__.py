@@ -31,17 +31,28 @@ from cumulonimbus.ecs.schema import (
 # Verbs that mutate cluster state.
 _WRITE_VERBS = {"create", "update", "patch", "delete", "deletecollection"}
 # Sensitive resources worth flagging.
-_SENSITIVE = {"secrets", "clusterrolebindings", "rolebindings", "pods/exec",
-              "pods/attach", "serviceaccounts"}
+_SENSITIVE = {
+    "secrets",
+    "clusterrolebindings",
+    "rolebindings",
+    "pods/exec",
+    "pods/attach",
+    "serviceaccounts",
+}
 
 
-def _orch(*, namespace=None, api_version=None, resource=None, res_name=None,
-          cluster=None) -> Orchestrator:
+def _orch(
+    *, namespace=None, api_version=None, resource=None, res_name=None, cluster=None
+) -> Orchestrator:
     return Orchestrator(
-        type="kubernetes", namespace=namespace, api_version=api_version,
+        type="kubernetes",
+        namespace=namespace,
+        api_version=api_version,
         cluster_name=cluster,
         resource=OrchestratorResource(name=res_name, type=resource)
-        if (res_name or resource) else None)
+        if (res_name or resource)
+        else None,
+    )
 
 
 def _image(ref: Optional[str]) -> Optional[ContainerImage]:
@@ -68,21 +79,34 @@ class AuditParser(Parser):
         src_ips = r.get("sourceIPs") or []
         return ForensicEvent(
             **{"@timestamp": r.get("requestReceivedTimestamp") or r.get("stageTimestamp")},
-            event=Event(action=f"{verb}:{full_res}" if full_res else verb,
-                        category=["configuration"] if verb in _WRITE_VERBS else ["process"],
-                        type=["change"] if verb in _WRITE_VERBS else ["info"],
-                        outcome="failure" if (code and code >= 400) else "success",
-                        provider="kubernetes", dataset="k8s.audit"),
-            user=User(name=user.get("username"),
-                      id=user.get("uid")) if user.get("username") else None,
+            event=Event(
+                action=f"{verb}:{full_res}" if full_res else verb,
+                category=["configuration"] if verb in _WRITE_VERBS else ["process"],
+                type=["change"] if verb in _WRITE_VERBS else ["info"],
+                outcome="failure" if (code and code >= 400) else "success",
+                provider="kubernetes",
+                dataset="k8s.audit",
+            ),
+            user=User(name=user.get("username"), id=user.get("uid"))
+            if user.get("username")
+            else None,
             source=Host(ip=src_ips[0]) if src_ips else None,
             cloud=Cloud(provider="kubernetes"),
-            orchestrator=_orch(namespace=obj.get("namespace"),
-                               api_version=obj.get("apiVersion"),
-                               resource=resource, res_name=obj.get("name")),
-            k8s={"verb": verb, "subresource": subres, "response_code": code,
-                 "stage": r.get("stage"), "user_agent": r.get("userAgent"),
-                 "groups": user.get("groups"), "sensitive": full_res in _SENSITIVE},
+            orchestrator=_orch(
+                namespace=obj.get("namespace"),
+                api_version=obj.get("apiVersion"),
+                resource=resource,
+                res_name=obj.get("name"),
+            ),
+            k8s={
+                "verb": verb,
+                "subresource": subres,
+                "response_code": code,
+                "stage": r.get("stage"),
+                "user_agent": r.get("userAgent"),
+                "groups": user.get("groups"),
+                "sensitive": full_res in _SENSITIVE,
+            },
         )
 
 
@@ -95,19 +119,33 @@ class EventParser(Parser):
         if not reason and not involved:
             return None
         return ForensicEvent(
-            **{"@timestamp": r.get("lastTimestamp") or r.get("eventTime")
-               or meta.get("creationTimestamp")},
+            **{
+                "@timestamp": r.get("lastTimestamp")
+                or r.get("eventTime")
+                or meta.get("creationTimestamp")
+            },
             message=r.get("message"),
-            event=Event(action=reason, category=["process"], type=["info"],
-                        outcome="failure" if r.get("type") == "Warning" else "success",
-                        provider="kubernetes", dataset="k8s.event"),
+            event=Event(
+                action=reason,
+                category=["process"],
+                type=["info"],
+                outcome="failure" if r.get("type") == "Warning" else "success",
+                provider="kubernetes",
+                dataset="k8s.event",
+            ),
             cloud=Cloud(provider="kubernetes"),
-            orchestrator=_orch(namespace=involved.get("namespace"),
-                               api_version=involved.get("apiVersion"),
-                               resource=(involved.get("kind") or "").lower() or None,
-                               res_name=involved.get("name")),
-            k8s={"reason": reason, "type": r.get("type"), "count": r.get("count"),
-                 "source_component": (r.get("source") or {}).get("component")},
+            orchestrator=_orch(
+                namespace=involved.get("namespace"),
+                api_version=involved.get("apiVersion"),
+                resource=(involved.get("kind") or "").lower() or None,
+                res_name=involved.get("name"),
+            ),
+            k8s={
+                "reason": reason,
+                "type": r.get("type"),
+                "count": r.get("count"),
+                "source_component": (r.get("source") or {}).get("component"),
+            },
         )
 
 
@@ -124,18 +162,27 @@ class ContainerParser(Parser):
         cid = r.get("containerID") or r.get("Id") or r.get("id")
         return ForensicEvent(
             **{"@timestamp": r.get("_timestamp") or r.get("startedAt")},
-            event=Event(action="DescribeContainer", category=["configuration"],
-                        type=["info"], kind="state",
-                        provider="kubernetes", dataset="k8s.container"),
+            event=Event(
+                action="DescribeContainer",
+                category=["configuration"],
+                type=["info"],
+                kind="state",
+                provider="kubernetes",
+                dataset="k8s.container",
+            ),
             cloud=Cloud(provider="kubernetes"),
-            container=Container(id=cid, name=name, image=_image(image_ref),
-                                runtime=r.get("_runtime")),
-            orchestrator=_orch(namespace=r.get("_namespace"),
-                               resource="pod", res_name=r.get("_pod")),
-            k8s={"ready": r.get("ready"), "restart_count": r.get("restartCount"),
-                 "privileged": (((r.get("securityContext") or {})
-                                 .get("privileged"))),
-                 "host_path_mounts": r.get("_host_path_mounts")},
+            container=Container(
+                id=cid, name=name, image=_image(image_ref), runtime=r.get("_runtime")
+            ),
+            orchestrator=_orch(
+                namespace=r.get("_namespace"), resource="pod", res_name=r.get("_pod")
+            ),
+            k8s={
+                "ready": r.get("ready"),
+                "restart_count": r.get("restartCount"),
+                "privileged": ((r.get("securityContext") or {}).get("privileged")),
+                "host_path_mounts": r.get("_host_path_mounts"),
+            },
         )
 
 
@@ -160,18 +207,33 @@ class EtcdParser(Parser):
         kind = value.get("kind") if isinstance(value, dict) else None
         is_secret = resource == "secrets" or kind == "Secret"
         return ForensicEvent(
-            **{"@timestamp": ((value.get("metadata") or {}) if isinstance(value, dict) else {})
-               .get("creationTimestamp")},
-            event=Event(action="EtcdObject", category=["configuration"],
-                        type=["info"], kind="state",
-                        provider="kubernetes", dataset="k8s.etcd"),
+            **{
+                "@timestamp": (
+                    (value.get("metadata") or {}) if isinstance(value, dict) else {}
+                ).get("creationTimestamp")
+            },
+            event=Event(
+                action="EtcdObject",
+                category=["configuration"],
+                type=["info"],
+                kind="state",
+                provider="kubernetes",
+                dataset="k8s.etcd",
+            ),
             cloud=Cloud(provider="kubernetes"),
-            orchestrator=_orch(namespace=namespace, resource=resource,
-                               res_name=res_name,
-                               api_version=value.get("apiVersion")
-                               if isinstance(value, dict) else None),
-            k8s={"etcd_key": key, "kind": kind, "at_rest": True,
-                 "contains_secret_material": is_secret,
-                 "data_keys": sorted((value.get("data") or {}).keys())
-                 if is_secret and isinstance(value, dict) else None},
+            orchestrator=_orch(
+                namespace=namespace,
+                resource=resource,
+                res_name=res_name,
+                api_version=value.get("apiVersion") if isinstance(value, dict) else None,
+            ),
+            k8s={
+                "etcd_key": key,
+                "kind": kind,
+                "at_rest": True,
+                "contains_secret_material": is_secret,
+                "data_keys": sorted((value.get("data") or {}).keys())
+                if is_secret and isinstance(value, dict)
+                else None,
+            },
         )

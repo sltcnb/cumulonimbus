@@ -28,10 +28,10 @@ class GuardDutyParser(Parser):
         service = record.get("Service") or {}
         action = service.get("Action") or {}
         remote_ip = (
-            ((action.get("NetworkConnectionAction") or {})
-                   .get("RemoteIpDetails") or {}).get("IpAddressV4")
-            or ((action.get("AwsApiCallAction") or {})
-                      .get("RemoteIpDetails") or {}).get("IpAddressV4"))
+            (action.get("NetworkConnectionAction") or {}).get("RemoteIpDetails") or {}
+        ).get("IpAddressV4") or (
+            (action.get("AwsApiCallAction") or {}).get("RemoteIpDetails") or {}
+        ).get("IpAddressV4")
 
         return ForensicEvent(
             **{"@timestamp": record.get("UpdatedAt") or record.get("CreatedAt")},
@@ -56,10 +56,12 @@ class GuardDutyParser(Parser):
                 "severity": record.get("Severity"),
                 "severity_label": _severity_label(record.get("Severity")),
             },
-            aws={"guardduty": {
-                "finding_id": record.get("Id"),
-                "type": record.get("Type"),
-                "count": (service.get("Count")),
-                "resource": record.get("Resource"),
-            }},
+            aws={
+                "guardduty": {
+                    "finding_id": record.get("Id"),
+                    "type": record.get("Type"),
+                    "count": (service.get("Count")),
+                    "resource": record.get("Resource"),
+                }
+            },
         )

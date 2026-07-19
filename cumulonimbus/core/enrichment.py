@@ -41,11 +41,13 @@ class GeoIPEnricher:
 
     def __init__(self, city_db: Optional[str] = None, asn_db: Optional[str] = None):
         import geoip2.database  # deferred: geoip2 is optional
+
         self._city = geoip2.database.Reader(city_db) if city_db else None
         self._asn = geoip2.database.Reader(asn_db) if asn_db else None
 
     def __call__(self, ev: ForensicEvent) -> None:
         import geoip2.errors
+
         for host in _hosts(ev):
             if not _is_public(host.ip):
                 continue
@@ -55,7 +57,8 @@ class GeoIPEnricher:
                     host.geo = Geo(
                         country_name=r.country.name,
                         country_iso_code=r.country.iso_code,
-                        city_name=r.city.name)
+                        city_name=r.city.name,
+                    )
                 except geoip2.errors.AddressNotFoundError:
                     pass
             if self._asn is not None:
@@ -108,11 +111,13 @@ class IOCEnricher:
         text = Path(path).read_text(encoding="utf-8").strip()
         if text.startswith("{"):
             bundle = json.loads(text)
-            ips = [o.get("value") for o in bundle.get("objects", [])
-                   if o.get("type") == "ipv4-addr" and o.get("value")]
+            ips = [
+                o.get("value")
+                for o in bundle.get("objects", [])
+                if o.get("type") == "ipv4-addr" and o.get("value")
+            ]
             return cls(ips)
-        return cls(line for line in text.splitlines()
-                   if line.strip() and not line.startswith("#"))
+        return cls(line for line in text.splitlines() if line.strip() and not line.startswith("#"))
 
     def __call__(self, ev: ForensicEvent) -> None:
         matched = [h.ip for h in _hosts(ev) if h.ip in self.iocs]

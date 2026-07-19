@@ -15,9 +15,20 @@ from cumulonimbus.core.parser import Parser, register
 from cumulonimbus.ecs.schema import Cloud, Event, ForensicEvent, Host, Network
 
 _DEFAULT_FIELDS = [
-    "version", "account_id", "interface_id", "srcaddr", "dstaddr",
-    "srcport", "dstport", "protocol", "packets", "bytes",
-    "start", "end", "action", "log_status",
+    "version",
+    "account_id",
+    "interface_id",
+    "srcaddr",
+    "dstaddr",
+    "srcport",
+    "dstport",
+    "protocol",
+    "packets",
+    "bytes",
+    "start",
+    "end",
+    "action",
+    "log_status",
 ]
 
 # IANA protocol number -> transport name.
@@ -45,8 +56,7 @@ class VPCFlowParser(Parser):
         proto = str(record.get("protocol", ""))
         proto_num = _to_int(proto)
         start = _to_int(record.get("start"))
-        ts = (datetime.fromtimestamp(start, tz=timezone.utc).isoformat()
-              if start else None)
+        ts = datetime.fromtimestamp(start, tz=timezone.utc).isoformat() if start else None
         action = record.get("action")
 
         return ForensicEvent(
@@ -55,8 +65,9 @@ class VPCFlowParser(Parser):
                 action=action,
                 category=["network"],
                 type=["connection"],
-                outcome="success" if action == "ACCEPT" else (
-                    "failure" if action == "REJECT" else None),
+                outcome="success"
+                if action == "ACCEPT"
+                else ("failure" if action == "REJECT" else None),
                 provider="aws",
                 dataset="aws.vpcflow",
             ),
@@ -69,6 +80,10 @@ class VPCFlowParser(Parser):
                 packets=_to_int(record.get("packets")),
             ),
             cloud=Cloud(provider="aws", account_id=record.get("account_id")),
-            aws={"vpc": {"interface_id": record.get("interface_id"),
-                         "log_status": record.get("log_status")}},
+            aws={
+                "vpc": {
+                    "interface_id": record.get("interface_id"),
+                    "log_status": record.get("log_status"),
+                }
+            },
         )

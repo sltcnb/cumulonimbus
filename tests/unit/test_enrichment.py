@@ -4,9 +4,11 @@ from cumulonimbus.ecs.schema import Event, ForensicEvent, Host
 
 
 def _ev(src=None, dst=None):
-    return ForensicEvent(source=Host(ip=src) if src else None,
-                         destination=Host(ip=dst) if dst else None,
-                         event=Event(kind="event"))
+    return ForensicEvent(
+        source=Host(ip=src) if src else None,
+        destination=Host(ip=dst) if dst else None,
+        event=Event(kind="event"),
+    )
 
 
 def test_ioc_flags_match():
@@ -35,9 +37,11 @@ def test_ioc_from_plaintext_file(tmp_path):
 
 def test_ioc_from_stix_bundle(tmp_path):
     f = tmp_path / "b.json"
-    f.write_text('{"type":"bundle","objects":['
-                 '{"type":"ipv4-addr","value":"203.0.113.99"},'
-                 '{"type":"observed-data","id":"x"}]}')
+    f.write_text(
+        '{"type":"bundle","objects":['
+        '{"type":"ipv4-addr","value":"203.0.113.99"},'
+        '{"type":"observed-data","id":"x"}]}'
+    )
     enr = IOCEnricher.from_file(str(f))
     assert enr.iocs == {"203.0.113.99"}
 

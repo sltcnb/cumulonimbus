@@ -16,6 +16,7 @@ class GuardDutyCollector(Collector):
 
     def _client(self):
         import boto3
+
         session = self._session or boto3.Session()
         return session.client("guardduty", region_name=self.region)
 
@@ -29,7 +30,7 @@ class GuardDutyCollector(Collector):
                 finding_ids.extend(page.get("FindingIds", []))
             # get_findings caps at 50 ids per call
             for i in range(0, len(finding_ids), 50):
-                batch = finding_ids[i:i + 50]
+                batch = finding_ids[i : i + 50]
                 if not batch:
                     continue
                 resp = client.get_findings(DetectorId=detector_id, FindingIds=batch)

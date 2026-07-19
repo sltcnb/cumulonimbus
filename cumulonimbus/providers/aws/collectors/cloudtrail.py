@@ -22,6 +22,7 @@ class CloudTrailCollector(Collector):
 
     def _client(self):
         import boto3  # deferred so boto3 stays an optional dependency
+
         session = self._session or boto3.Session()
         return session.client("cloudtrail", region_name=self.region)
 

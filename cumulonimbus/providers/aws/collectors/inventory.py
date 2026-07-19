@@ -16,6 +16,7 @@ class _AwsCollector(Collector):
 
     def _client(self):
         import boto3
+
         session = self._session or boto3.Session()
         return session.client(self.service, region_name=self.region)
 
@@ -41,7 +42,8 @@ class IAMCollector(_AwsCollector):
             for u in page.get("Users", []):
                 u["_resource_type"] = "user"
                 u["AttachedPolicies"] = client.list_attached_user_policies(
-                    UserName=u["UserName"]).get("AttachedPolicies")
+                    UserName=u["UserName"]
+                ).get("AttachedPolicies")
                 yield u
         for page in client.get_paginator("list_roles").paginate():
             for r in page.get("Roles", []):

@@ -24,6 +24,7 @@ class _LoggingCollector(_GCPCollector):
 
     def collect(self) -> Iterator[dict[str, Any]]:
         from google.cloud import logging_v2
+
         client = logging_v2.Client(project=self.project, credentials=self._credentials)
         filt = [self.log_filter]
         if self.start_time:
@@ -49,6 +50,7 @@ class SCCCollector(_GCPCollector):
 
     def collect(self) -> Iterator[dict[str, Any]]:
         from google.cloud import securitycenter
+
         client = securitycenter.SecurityCenterClient(credentials=self._credentials)
         parent = f"projects/{self.project}/sources/-"
         for res in client.list_findings(request={"parent": parent}):

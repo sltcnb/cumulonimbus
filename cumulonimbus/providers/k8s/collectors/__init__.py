@@ -24,6 +24,7 @@ class EventCollector(Collector):
 
     def collect(self) -> Iterator[dict[str, Any]]:
         from kubernetes import client, config
+
         if self.in_cluster:
             config.load_incluster_config()
         else:
@@ -71,6 +72,7 @@ class ContainerCollector(Collector):
 
     def collect(self) -> Iterator[dict[str, Any]]:
         from kubernetes import client, config
+
         if self.in_cluster:
             config.load_incluster_config()
         else:
@@ -83,8 +85,9 @@ class ContainerCollector(Collector):
             # spec containers carry image + securityContext; status carries runtime state
             specs = {c.name: c for c in (spec.containers or [])}
             statuses = {s.name: s for s in (pod.status.container_statuses or [])}
-            host_paths = [v.host_path.path for v in (spec.volumes or [])
-                          if getattr(v, "host_path", None)]
+            host_paths = [
+                v.host_path.path for v in (spec.volumes or []) if getattr(v, "host_path", None)
+            ]
             for name, c in specs.items():
                 st = statuses.get(name)
                 sc = sanitize(c.security_context) if c.security_context else {}

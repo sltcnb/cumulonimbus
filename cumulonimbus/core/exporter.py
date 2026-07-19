@@ -46,8 +46,9 @@ def _open(path: Path, gz: bool):
     return open(path, "w", encoding="utf-8", newline="")
 
 
-def export(events: Iterable[ForensicEvent], output: Path, fmt: str = "jsonl",
-           gz: bool = False) -> int:
+def export(
+    events: Iterable[ForensicEvent], output: Path, fmt: str = "jsonl", gz: bool = False
+) -> int:
     """Write events; return count. `output` is the destination file path."""
     if fmt not in FORMATS:
         raise ValueError(f"unknown format {fmt!r}; choose from {FORMATS}")

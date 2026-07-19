@@ -3,14 +3,25 @@ import json
 from cumulonimbus.core import analysis, exports
 
 EVENTS = [
-    {"@timestamp": "2024-01-15T10:30:00Z", "event": {"action": "ConsoleLogin",
-     "category": ["authentication"], "outcome": "success", "provider": "aws"},
-     "user": {"name": "admin@corp.com"}, "source": {"ip": "203.0.113.42"},
-     "cloud": {"provider": "aws"}},
-    {"@timestamp": "2024-01-15T10:35:00Z", "event": {"action": "SignIn",
-     "outcome": "success", "provider": "azure"},
-     "user": {"name": "admin"}, "source": {"ip": "203.0.113.42"},
-     "cloud": {"provider": "azure"}},
+    {
+        "@timestamp": "2024-01-15T10:30:00Z",
+        "event": {
+            "action": "ConsoleLogin",
+            "category": ["authentication"],
+            "outcome": "success",
+            "provider": "aws",
+        },
+        "user": {"name": "admin@corp.com"},
+        "source": {"ip": "203.0.113.42"},
+        "cloud": {"provider": "aws"},
+    },
+    {
+        "@timestamp": "2024-01-15T10:35:00Z",
+        "event": {"action": "SignIn", "outcome": "success", "provider": "azure"},
+        "user": {"name": "admin"},
+        "source": {"ip": "203.0.113.42"},
+        "cloud": {"provider": "azure"},
+    },
 ]
 
 

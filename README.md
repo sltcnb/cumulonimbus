@@ -1,6 +1,9 @@
 # Cumulonimbus
 
 [![CI](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml/badge.svg)](https://github.com/sltcnb/cumulonimbus/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://github.com/sltcnb/cumulonimbus)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 **Cloud forensics & incident-response toolkit.** Collects cloud-native logs and
 artifacts from AWS, Azure, GCP, and Kubernetes, parses and normalizes them to
@@ -48,6 +51,7 @@ flowchart LR
 - [Repository layout](#repository-layout)
 - [Security notes](#security-notes)
 - [Roadmap](#roadmap)
+- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -561,6 +565,15 @@ cumulonimbus/
 - Forensic snapshot automation (EBS / Azure Disk / GCE Disk)
 - Container/etcd forensics for Kubernetes
 - Anomaly detection on user behavior and network flows
+
+---
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup,
+conventions, and how to add a dataset. Please report security issues privately
+per [SECURITY.md](SECURITY.md) rather than opening a public issue. Notable
+changes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

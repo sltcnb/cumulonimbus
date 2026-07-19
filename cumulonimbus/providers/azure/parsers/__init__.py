@@ -28,28 +28,43 @@ def _sub_from_resource_id(rid: Optional[str]) -> Optional[str]:
 @register("azure.activity")
 class ActivityLogParser(Parser):
     def parse_record(self, r: dict[str, Any]) -> Optional[ForensicEvent]:
-        op = (r.get("operationName") or {})
+        op = r.get("operationName") or {}
         op_name = op.get("value") if isinstance(op, dict) else op
         if not op_name:
             return None
-        status = (r.get("status") or {})
+        status = r.get("status") or {}
         status_val = status.get("value") if isinstance(status, dict) else status
         rid = r.get("resourceId")
         ip = r.get("callerIpAddress")
         return ForensicEvent(
             **{"@timestamp": r.get("eventTimestamp") or r.get("time")},
-            event=Event(action=op_name, category=["configuration"], type=["change"],
-                        outcome="success" if status_val in ("Succeeded", "Success") else
-                        ("failure" if status_val in ("Failed", "Failure") else None),
-                        provider="azure", dataset="azure.activity"),
+            event=Event(
+                action=op_name,
+                category=["configuration"],
+                type=["change"],
+                outcome="success"
+                if status_val in ("Succeeded", "Success")
+                else ("failure" if status_val in ("Failed", "Failure") else None),
+                provider="azure",
+                dataset="azure.activity",
+            ),
             user=User(name=r.get("caller")) if r.get("caller") else None,
             source=Host(ip=ip) if ip else None,
-            cloud=Cloud(provider="azure", account_id=_sub_from_resource_id(rid),
-                        service_name=(r.get("resourceProviderName") or {}).get("value")
-                        if isinstance(r.get("resourceProviderName"), dict) else None),
-            azure={"activity": {"operation": op_name, "resource_id": rid,
-                                "level": r.get("level"),
-                                "correlation_id": r.get("correlationId")}},
+            cloud=Cloud(
+                provider="azure",
+                account_id=_sub_from_resource_id(rid),
+                service_name=(r.get("resourceProviderName") or {}).get("value")
+                if isinstance(r.get("resourceProviderName"), dict)
+                else None,
+            ),
+            azure={
+                "activity": {
+                    "operation": op_name,
+                    "resource_id": rid,
+                    "level": r.get("level"),
+                    "correlation_id": r.get("correlationId"),
+                }
+            },
         )
 
 
@@ -64,19 +79,26 @@ class SignInParser(Parser):
         loc = r.get("location") or {}
         return ForensicEvent(
             **{"@timestamp": r.get("createdDateTime")},
-            event=Event(action="SignIn", category=["authentication"], type=["start"],
-                        outcome="success" if err in (0, "0", None) else "failure",
-                        provider="azure", dataset="azure.signin"),
+            event=Event(
+                action="SignIn",
+                category=["authentication"],
+                type=["start"],
+                outcome="success" if err in (0, "0", None) else "failure",
+                provider="azure",
+                dataset="azure.signin",
+            ),
             user=User(name=upn, id=r.get("userId"), email=upn),
-            source=Host(ip=r.get("ipAddress"),
-                        geo=_geo(loc)) if r.get("ipAddress") else None,
-            cloud=Cloud(provider="azure", account_id=r.get("tenantId"),
-                        service_name="entra-id"),
-            azure={"signin": {"app": r.get("appDisplayName"),
-                              "client_app": r.get("clientAppUsed"),
-                              "error_code": err,
-                              "conditional_access": r.get("conditionalAccessStatus"),
-                              "device": (r.get("deviceDetail") or {}).get("operatingSystem")}},
+            source=Host(ip=r.get("ipAddress"), geo=_geo(loc)) if r.get("ipAddress") else None,
+            cloud=Cloud(provider="azure", account_id=r.get("tenantId"), service_name="entra-id"),
+            azure={
+                "signin": {
+                    "app": r.get("appDisplayName"),
+                    "client_app": r.get("clientAppUsed"),
+                    "error_code": err,
+                    "conditional_access": r.get("conditionalAccessStatus"),
+                    "device": (r.get("deviceDetail") or {}).get("operatingSystem"),
+                }
+            },
         )
 
 
@@ -86,19 +108,30 @@ class AuditLogParser(Parser):
         activity = r.get("activityDisplayName")
         if not activity:
             return None
-        initiator = (((r.get("initiatedBy") or {}).get("user") or {}).get("userPrincipalName")
-                     or ((r.get("initiatedBy") or {}).get("app") or {}).get("displayName"))
+        initiator = ((r.get("initiatedBy") or {}).get("user") or {}).get("userPrincipalName") or (
+            (r.get("initiatedBy") or {}).get("app") or {}
+        ).get("displayName")
         return ForensicEvent(
             **{"@timestamp": r.get("activityDateTime")},
-            event=Event(action=activity, category=["iam"], type=["change"],
-                        outcome="success" if r.get("result") == "success" else
-                        ("failure" if r.get("result") else None),
-                        provider="azure", dataset="azure.audit"),
+            event=Event(
+                action=activity,
+                category=["iam"],
+                type=["change"],
+                outcome="success"
+                if r.get("result") == "success"
+                else ("failure" if r.get("result") else None),
+                provider="azure",
+                dataset="azure.audit",
+            ),
             user=User(name=initiator) if initiator else None,
             cloud=Cloud(provider="azure", service_name="entra-id"),
-            azure={"audit": {"category": r.get("category"),
-                             "target_resources": r.get("targetResources"),
-                             "result_reason": r.get("resultReason")}},
+            azure={
+                "audit": {
+                    "category": r.get("category"),
+                    "target_resources": r.get("targetResources"),
+                    "result_reason": r.get("resultReason"),
+                }
+            },
         )
 
 
@@ -127,6 +160,7 @@ class NSGFlowParser(Parser):
         else:
             return None
         from cumulonimbus.ecs.schema import Network
+
         iso = None
         try:
             iso = datetime.fromtimestamp(int(ts), tz=timezone.utc).isoformat()
@@ -134,14 +168,20 @@ class NSGFlowParser(Parser):
             iso = ts if isinstance(ts, str) else None
         return ForensicEvent(
             **{"@timestamp": iso},
-            event=Event(action=decision, category=["network"], type=["connection"],
-                        outcome="success" if decision == "A" else
-                        ("denied" if decision == "D" else None),
-                        provider="azure", dataset="azure.nsgflow"),
+            event=Event(
+                action=decision,
+                category=["network"],
+                type=["connection"],
+                outcome="success" if decision == "A" else ("denied" if decision == "D" else None),
+                provider="azure",
+                dataset="azure.nsgflow",
+            ),
             source=Host(ip=s_ip or None, port=_int(s_p)),
             destination=Host(ip=d_ip or None, port=_int(d_p)),
-            network=Network(transport=_PROTO.get(proto, proto),
-                            direction={"I": "inbound", "O": "outbound"}.get(direction)),
+            network=Network(
+                transport=_PROTO.get(proto, proto),
+                direction={"I": "inbound", "O": "outbound"}.get(direction),
+            ),
             cloud=Cloud(provider="azure"),
         )
 
@@ -155,7 +195,7 @@ def _int(v):
 
 def _geo(loc: dict):
     from cumulonimbus.ecs.schema import Geo
+
     if not loc:
         return None
-    return Geo(country_iso_code=loc.get("countryOrRegion"),
-               city_name=loc.get("city"))
+    return Geo(country_iso_code=loc.get("countryOrRegion"), city_name=loc.get("city"))

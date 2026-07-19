@@ -61,13 +61,17 @@ def test_s3_log_collect_lines():
     s = boto3.Session(region_name=REGION)
     s3 = s.client("s3", region_name=REGION)
     s3.create_bucket(Bucket="flow-logs")
-    flow = ("2 123456789012 eni-abc 10.0.1.42 198.51.100.10 54321 443 6 "
-            "10 1024 1704067200 1704067260 ACCEPT OK")
+    flow = (
+        "2 123456789012 eni-abc 10.0.1.42 198.51.100.10 54321 443 6 "
+        "10 1024 1704067200 1704067260 ACCEPT OK"
+    )
     s3.put_object(Bucket="flow-logs", Key="logs/1.log", Body=flow.encode())
 
-    lines = list(S3LogCollector(bucket="flow-logs", prefix="logs/",
-                                dataset="aws.vpcflow", session=s,
-                                region=REGION).collect())
+    lines = list(
+        S3LogCollector(
+            bucket="flow-logs", prefix="logs/", dataset="aws.vpcflow", session=s, region=REGION
+        ).collect()
+    )
     assert lines == [flow]
     ev = get_parser("aws.vpcflow")().parse_record(lines[0]).to_ecs()
     assert ev["destination"]["port"] == 443
